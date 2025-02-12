@@ -1,3 +1,5 @@
+Tienes que tener activo el gcode shell desde helper script.
+
 git clone --depth 1 https://github.com/Ender3v3mm/smm/ /usr/data/printer_data/config
 
 chmod +x /usr/data/printer_data/config/cambiar_1.sh
