@@ -1,4 +1,6 @@
 
+![WhatsApp Image 2025-02-09 at 20 36 34](https://github.com/user-attachments/assets/619ca5a8-0afe-430f-b05d-ac9824a4ab4e)
+![WhatsApp Image 2025-02-09 at 17 47 19](https://github.com/user-attachments/assets/1ffc2e85-d1c5-49d3-9a37-f226ac96fb64)
 
 
 TRABAJANDO EN LA PURGA, DE MOMENTO TIENE LA PURGA EN UN LATERAL, EJECUTANDO UNOS MOVIMIENTOS PARA QUE NO DAÑE LA IMPRESION, LA INTENCION ES AÑADIR UN SERVO, QUE RECOJA EL DESECHO Y LO MUEVA.
@@ -89,5 +91,4 @@ La torre de purga del slicer debe estar desactivada.
 La opcion de multimaterial, tiene que ser de multimaterial con un extrusor y añadir los 4 filamentos en su apartado correspondiente, con eso es suficiente en el slicer
 
 Sigo trabajando en la torre de purga, se admiten ideas!
-
 
