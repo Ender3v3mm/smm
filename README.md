@@ -1,32 +1,48 @@
 TRABAJANDO EN LA PURGA, DE MOMENTO TIENE LA PURGA EN UN LATERAL, EJECUTANDO UNOS MOVIMIENTOS PARA QUE NO DAÑE LA IMPRESION, LA INTENCION ES AÑADIR UN SERVO, QUE RECOJA EL DESECHO Y LO MUEVA.
 
 
-MATERIALES NECESARIOS.
+MATERIALES NECESARIOS:
+
 x1 PLACA CONTROLADORA IMPRESORA 3D QUE ADMITA KLIPPER (AQUI HE USADO RAMPS)
+
 x4 MOTORES NEMA 171
+
 x1 FUENTE DE ALIMENTACION 12V 3A
+
 x4 KIT EXTRUSOR MK8
+
 3 METROS TUBO PTFE
+
 x4 CONECTORES PC4-M6
+
 x5 CONECTORES PC4-M10
+
 x1 VIA 4 A 1 GUIA DE FILAMENTO
 
 
 
 TENEMOS DOS VERSIONES
+
 CON FIRMWARE KLIPPER (KLIPPERRAMPS.CFG)
+
 CON ARDUINO (LOS DEMAS ARCHIVOS)
 
 
 
 *OPCION KLIPPER
+
 Descargar klipperramps.cfg.
+
 ¡¡EN CASO DE SER NECESARIO!! CAMBIAMOS LOS PUERTOS DE LOS MANUAL_STEPPER POR LOS DEFINIDOS EN NUESTRA PLACA PARA KLIPPER.
+
 Subirlo a la impresora desde mainsail o fluidd.
+
 Añadir [include klipperramps.cfg] en printer.cfg.
-Verificar la distancia que necesita para descargar, en caso de necesitar cambio, modificamos en _DESCARGA_FILAMENTO
- -300 por la distancia necesaria.
+
+Verificar la distancia que necesita para descargar, en caso de necesitar cambio, modificamos en _DESCARGA_FILAMENTO -300 por la distancia necesaria.
+ 
  Guardamos y reiniciamos.
+ 
  Para poder pobras sin estar en una impresion, calentamos hotend a 220º y hacemos homing.
  
  ¡¡¡RECOMENDACION!!!
