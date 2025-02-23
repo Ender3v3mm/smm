@@ -90,8 +90,11 @@ La opcion de multimaterial, tiene que ser de multimaterial con un extrusor y añ
 Sigo trabajando en la torre de purga, se admiten ideas!
 
 
-https://github.com/user-attachments/assets/ee3e932f-3461-466c-8803-b452800a730c
 
+
+
+
+https://github.com/user-attachments/assets/21bc9149-c990-490b-93e9-277dc5cbe5cd
 
 
 ![WhatsApp Image 2025-02-09 at 20 36 34](https://github.com/user-attachments/assets/619ca5a8-0afe-430f-b05d-ac9824a4ab4e)
