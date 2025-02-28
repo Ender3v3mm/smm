@@ -1,0 +1,26 @@
+Explicación del código
+Conexión WiFi:
+Se incluye la biblioteca WiFi.h y se configuran las credenciales para conectarse a tu red. Al iniciar, el ESP32 se conecta y muestra la IP asignada.
+
+Servidor TCP:
+Se crea un objeto WiFiServer que escucha en el puerto 25000. Cuando un cliente se conecta, el firmware lee los comandos G-code línea por línea.
+
+Interpretación de G-code:
+
+G92: Reinicia la posición del motor según el valor de X (multiplicado por 110, según tu configuración).
+G1: Mueve el motor a la posición indicada (también multiplicada por 110) y ajusta la velocidad si se especifica un parámetro F.
+Control del motor:
+
+Antes de mover, se activa el motor (se pone el pin ENABLE en LOW).
+Se usa AccelStepper para gestionar la aceleración y la velocidad del motor.
+Si no se reciben nuevos comandos y el motor ha llegado a su posición, se desactiva automáticamente después de 10 segundos.
+Ejecución en el loop:
+Se revisa constantemente la conexión TCP y se ejecutan los movimientos. La desactivación por inactividad se comprueba tanto dentro del ciclo del cliente como en el loop principal.
+
+Este ejemplo puede servirte como punto de partida para adaptar tu firmware a ESP32 y controlar un motor a través de comandos G-code recibidos por WiFi. Recuerda que, dependiendo de tu hardware, quizás necesites ajustar la asignación de pines y la lógica de habilitación del driver.
+
+
+
+
+
+
