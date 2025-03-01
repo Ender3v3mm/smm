@@ -1,135 +1,103 @@
 #include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <AccelStepper.h>
 
 // ===== Configuración de pines para el motor =====
-#define STEP_PIN   36
-#define DIR_PIN    34
-#define ENABLE_PIN 30
+#define STEP_PIN   14
+#define DIR_PIN    12
+#define ENABLE_PIN 27
 
-// Límites de posición (en unidades arbitrarias)
-const float MAX_POSITION = 1000.0;
-const float MIN_POSITION = -1000.0;
+// WiFi
+const char* ssid = "MiFibra-4B5B-24G";
+const char* password = "JoUqy7cG";
 
-// ===== Configuración WiFi =====
-const char* ssid = "TU_SSID";         // Reemplaza por el nombre de tu red
-const char* password = "TU_PASSWORD"; // Reemplaza por la contraseña de tu red
+// Crear servidor web en el puerto 80 y un WebSocket en "/ws"
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
 
-// Crear servidor WiFi en el puerto 25000
-WiFiServer server(25000);
-
-// ===== Creación del objeto AccelStepper para un motor =====
+// Crear objeto para el motor usando AccelStepper
 AccelStepper stepper(AccelStepper::DRIVER, STEP_PIN, DIR_PIN);
+bool motorEnabled = false;
 
-unsigned long lastCommandTime = 0; // Para medir inactividad
-bool motorEnabled = false;         // Estado actual del motor
-
-// Función para interpretar comandos G-code
-void parseGCode(String command) {
-    command.trim(); // Eliminar espacios o saltos extra
-
-    // --- Comando G92: Resetear la posición (usamos X para el motor) ---
-    if (command.startsWith("G92")) {
-        int index = command.indexOf('X');
-        if (index != -1) {
-            float newX = command.substring(index + 1).toFloat();
-            stepper.setCurrentPosition(newX * 110);
-            Serial.print("G92 ejecutado: X=");
-            Serial.println(newX);
-        }
-        return;
+// Función para manejar eventos del WebSocket
+void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
+               void *arg, uint8_t *data, size_t len) {
+  if (type == WS_EVT_DATA) {
+    String msg = "";
+    for (size_t i = 0; i < len; i++) {
+      msg += (char)data[i];
     }
+    Serial.printf("Mensaje WS recibido: %s\n", msg.c_str());
     
-    // --- Comando G1: Movimiento lineal ---
-    if (command.startsWith("G1")) {
-        float x = NAN;
-        float f = 6000; // Velocidad por defecto
-        
-        if (command.indexOf('X') != -1) {
-            x = constrain(command.substring(command.indexOf('X') + 1).toFloat(), MIN_POSITION, MAX_POSITION);
-        }
-        if (command.indexOf('F') != -1) {
-            f = command.substring(command.indexOf('F') + 1).toFloat();
-        }
-        
-        // Configurar la velocidad máxima del motor
-        stepper.setMaxSpeed(f);
-        
-        // Si se especifica posición, activar y mover el motor
-        if (!isnan(x)) {
-            digitalWrite(ENABLE_PIN, LOW); // LOW activa el motor (verifica la polaridad de tu driver)
-            motorEnabled = true;
-            stepper.moveTo(x * 110);
-        }
+    // Interpretar comandos
+    if (msg == "UP") {
+      digitalWrite(ENABLE_PIN, LOW); // Activa el motor
+      motorEnabled = true;
+      // Mueve 200 pasos en una dirección (multiplica según calibración)
+      stepper.moveTo(stepper.currentPosition() + 200);
+    } else if (msg == "DOWN") {
+      digitalWrite(ENABLE_PIN, LOW);
+      motorEnabled = true;
+      // Mueve 200 pasos en dirección contraria
+      stepper.moveTo(stepper.currentPosition() - 200);
+    } else if (msg == "STOP") {
+      stepper.stop();
+      digitalWrite(ENABLE_PIN, HIGH);
+      motorEnabled = false;
     }
+  }
 }
 
 void setup() {
-    Serial.begin(115200);
-    
-    // ===== Conexión a la red WiFi =====
-    WiFi.begin(ssid, password);
-    Serial.print("Conectando a WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("\nWiFi conectado");
-    Serial.print("Dirección IP: ");
-    Serial.println(WiFi.localIP());
-    
-    // Iniciar el servidor WiFi
-    server.begin();
-    Serial.println("Servidor WiFi iniciado en el puerto 25000");
-    
-    // ===== Configuración de pines =====
-    pinMode(ENABLE_PIN, OUTPUT);
-    digitalWrite(ENABLE_PIN, HIGH); // Desactivar motor inicialmente (HIGH desactiva)
-    
-    // Asignar el pin de habilitación al objeto AccelStepper
-    stepper.setEnablePin(ENABLE_PIN);
-    
-    // Configuración de velocidad y aceleración (ajusta estos valores según tu aplicación)
-    stepper.setMaxSpeed(6000);
-    stepper.setAcceleration(6000);
+  Serial.begin(115200);
+  
+  // Configurar pin ENABLE (LOW activa el driver)
+  pinMode(ENABLE_PIN, OUTPUT);
+  digitalWrite(ENABLE_PIN, HIGH); // Motor deshabilitado inicialmente
+  
+  // Configurar motor
+  stepper.setMaxSpeed(1000);
+  stepper.setAcceleration(500);
+  
+  // Conectar a WiFi
+  WiFi.begin(ssid, password);
+  Serial.print("Conectando a WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi conectado");
+  Serial.println(WiFi.localIP());
+  
+  // Configurar WebSocket
+  ws.onEvent(onWsEvent);
+  server.addHandler(&ws);
+  
+  // Servir página web básica
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, "text/html", 
+      "<html><head><title>Control de Motor</title></head><body>"
+      "<h1>Control de Motor Nema 17</h1>"
+      "<button onclick=\"ws.send('UP')\">Subir</button> "
+      "<button onclick=\"ws.send('DOWN')\">Bajar</button> "
+      "<button onclick=\"ws.send('STOP')\">Parar</button>"
+      "<script>var ws=new WebSocket('ws://'+location.hostname+'/ws');</script>"
+      "</body></html>");
+  });
+  
+  server.begin();
 }
 
 void loop() {
-    // Comprobar si hay un cliente conectado al servidor WiFi
-    WiFiClient client = server.available();
-    if (client) {
-        Serial.println("Cliente conectado");
-        while (client.connected()) {
-            if (client.available()) {
-                String command = client.readStringUntil('\n');
-                if (command.length() > 0) {
-                    Serial.print("Comando recibido: ");
-                    Serial.println(command);
-                    parseGCode(command);
-                    lastCommandTime = millis(); // Actualizar el tiempo del último comando
-                    client.println("ok");         // Responder al cliente
-                }
-            }
-            // Ejecutar el movimiento del motor
-            stepper.run();
-            
-            // Si el motor llegó a su posición y han pasado 10 segundos sin nuevos comandos, desactivar
-            if (motorEnabled && stepper.distanceToGo() == 0 && (millis() - lastCommandTime > 10000)) {
-                digitalWrite(ENABLE_PIN, HIGH);
-                motorEnabled = false;
-                Serial.println("Motor desactivado por inactividad");
-            }
-        }
-        client.stop();
-        Serial.println("Cliente desconectado");
-    }
-    
-    // Ejecutar el motor de forma continua (incluso sin cliente activo)
+  // Ejecuta el movimiento del motor
+  if (motorEnabled) {
     stepper.run();
-    
-    // Comprobar inactividad en el loop principal
-    if (motorEnabled && stepper.distanceToGo() == 0 && (millis() - lastCommandTime > 10000)) {
-        digitalWrite(ENABLE_PIN, HIGH);
-        motorEnabled = false;
-        Serial.println("Motor desactivado por inactividad");
+    // Cuando se alcanza la posición, deshabilitar motor
+    if (stepper.distanceToGo() == 0) {
+      digitalWrite(ENABLE_PIN, HIGH);
+      motorEnabled = false;
+      Serial.println("Movimiento completado, motor desactivado");
     }
+  }
 }
